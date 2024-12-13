@@ -26,7 +26,7 @@ export default function AuthPage() {
   useEffect(() => {
     /* TEST KULLANICI İÇİN OTOMATİK GİRİŞ */
     const testEmail = 'deneme@gmail.com'
-    const testPassword = 'efeoyunda31'
+    const testPassword = 'mitatbey'
 
     const autoLogin = async () => {
       setLoading(true)
