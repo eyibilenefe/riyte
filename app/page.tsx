@@ -15,37 +15,36 @@ export default function Home() {
       setUser(currentUser)
 
       if (currentUser) {
-        // Eğer kullanıcı giriş yaptıysa, grid sayfasına yönlendir
+        // If the user is logged in, redirect to the grid page
         router.push('/grid')
       }
     })
 
-    // Component unmount olduğunda auth listener'ı temizle
+    // Clean up auth listener on component unmount
     return () => {
       authListener.subscription.unsubscribe()
     }
   }, [router])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold mb-8">r/place Clone</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 p-6">
+      <h1 className="text-5xl font-extrabold text-center text-white mb-12">r/place Clone</h1>
 
       {user === null ? (
-        <div>
-          <p>Please sign in to continue</p>
-          {/* Giriş yapmak için yönlendirecek buton */}
+        <div className="text-center text-white">
+          <p className="text-xl mb-6">Please sign in to continue</p>
+          {/* Redirect button to the login page */}
           <button
             onClick={() => router.push('/auth')}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            className="bg-indigo-600 text-white py-3 px-6 rounded-lg text-lg hover:bg-indigo-700 transition ease-in-out transform hover:scale-105"
           >
             Go to Login
           </button>
         </div>
       ) : user === false ? (
-        <p>Loading...</p>
+        <p className="text-white text-xl">Loading...</p>
       ) : (
-        // Eğer kullanıcı giriş yaptıysa, grid'e yönlendirildikten sonra başka bir şey gösterebilirsiniz
-        <p>Redirecting to grid...</p>
+        <p className="text-white text-xl">Redirecting to grid...</p>
       )}
     </main>
   )

@@ -7,58 +7,44 @@ import { useRouter } from 'next/navigation'
 export default function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('') // New state for the confirm password
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  // Email validation
+  // Email validation - only @iyte.edu.tr is valid
   const validateEmail = (email: string) => {
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    const regex = /^[a-zA-Z0-9._%+-]+@std.\iyte\.edu\.tr$/; // Only emails with @iyte.edu.tr are valid
     return regex.test(email)
   }
 
   // Password validation
   const validatePassword = (password: string) => {
-    return password.length >= 6 // You can add more complex password checks if needed
+    return password.length >= 6 // Password should be at least 6 characters long
   }
 
-  // Test kullanıcı için otomatik giriş mekanizması
+  // Check if the user is already logged in
   useEffect(() => {
-    /* TEST KULLANICI İÇİN OTOMATİK GİRİŞ */
-    const testEmail = 'deneme@gmail.com'
-    const testPassword = 'mitatbey'
-
-    const autoLogin = async () => {
-      setLoading(true)
-      const { error, user } = await supabase.auth.signInWithPassword({
-        email: testEmail,
-        password: testPassword,
-      })
-      setLoading(false)
-
-      if (error) {
-        console.error('Test kullanıcısı için giriş başarısız:', error.message)
-        alert(`Test kullanıcısı için giriş başarısız: ${error.message}`)
-      } else {
-        console.log('Test kullanıcısı için giriş başarılı:', user)
-        router.push('/grid')
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        router.push('/grid') // If the user is logged in, redirect them to the grid page
       }
     }
-
-    autoLogin()
-  }, [router]) // Router bağımlılığı eklenmiştir
+    checkSession()
+  }, [router])
 
   // Giriş işlemi
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!validateEmail(email)) {
-      alert('Invalid email format')
+      alert('Geçersiz email formatı. Sadece @iyte.edu.tr ile biten e-postalar geçerlidir.')
       return
     }
 
     if (!validatePassword(password)) {
-      alert('Password should be at least 6 characters long')
+      alert('Şifre en az 6 karakter uzunluğunda olmalıdır.')
       return
     }
 
@@ -70,7 +56,7 @@ export default function AuthPage() {
     if (error) {
       alert(error.message)
     } else {
-      router.push('/grid')
+      router.push('/grid') // Başarılı giriş sonrası kullanıcıyı grid sayfasına yönlendir
     }
   }
 
@@ -79,12 +65,17 @@ export default function AuthPage() {
     e.preventDefault()
 
     if (!validateEmail(email)) {
-      alert('Invalid email format')
+      alert('Geçersiz email formatı. Sadece @iyte.edu.tr ile biten e-postalar geçerlidir.')
       return
     }
 
     if (!validatePassword(password)) {
-      alert('Password should be at least 6 characters long')
+      alert('Şifre en az 6 karakter uzunluğunda olmalıdır.')
+      return
+    }
+
+    if (password !== confirmPassword) { // Check if passwords match
+      alert('Şifreler uyuşmuyor!')
       return
     }
 
@@ -96,58 +87,72 @@ export default function AuthPage() {
     if (error) {
       alert(error.message)
     } else {
-      alert('Sign up successful! Please log in.')
+      alert('Kayıt başarılı! Lütfen giriş yapın.')
       setIsLogin(true) // Kayıt başarılı olduğunda login formunu göster
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-md">
-        <h1 className="text-3xl font-bold text-center">{isLogin ? 'Sign In' : 'Sign Up'}</h1>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-blue-500 via-teal-500 to-purple-600">
+      <div className="w-full max-w-lg p-8 space-y-6 bg-black rounded-xl shadow-xl border-4 border-pink-500">
+        <h1 className="text-5xl font-bold text-center text-white pixel-font">{isLogin ? 'Giriş Yap' : 'Kayıt Ol'}</h1>
         
-        <form onSubmit={isLogin ? handleSignIn : handleSignUp} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+        <form onSubmit={isLogin ? handleSignIn : handleSignUp} className="space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-medium text-white">Email</label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              placeholder="E-posta adresinizi girin"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-md focus:outline-none pixel-input"
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-sm font-medium text-white">Şifre</label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              placeholder="Şifrenizi girin"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-md focus:outline-none pixel-input"
             />
           </div>
 
+          {!isLogin && ( // Only show this field on the registration form
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white">Şifreyi Tekrar Girin</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Şifrenizi tekrar girin"
+                className="block w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-md focus:outline-none pixel-input"
+              />
+            </div>
+          )}
+
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500"
+            className="w-full py-3 px-4 bg-pink-500 text-white rounded-md hover:bg-pink-600 focus:ring-2 focus:ring-pink-500 disabled:opacity-50 transition ease-in-out pixel-button"
             disabled={loading}
           >
-            {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
+            {loading ? 'İşlem yapılıyor...' : isLogin ? 'Giriş Yap' : 'Kayıt Ol'}
           </button>
         </form>
 
         <div className="text-center">
-          <p className="text-sm text-gray-600">
-            {isLogin ? "Don't have an account?" : 'Already have an account?'}
+          <p className="text-sm text-gray-300">
+            {isLogin ? "Hesabınız yok mu?" : 'Hesabınız var mı?'}
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="ml-1 text-indigo-600 hover:text-indigo-800 font-semibold"
+              className="ml-1 text-pink-500 hover:text-pink-700 font-semibold transition ease-in-out"
             >
-              {isLogin ? 'Sign Up' : 'Sign In'}
+              {isLogin ? 'Kayıt Ol' : 'Giriş Yap'}
             </button>
           </p>
         </div>
