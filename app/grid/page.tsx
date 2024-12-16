@@ -31,6 +31,8 @@ function debounce<T extends (...args: unknown[]) => void>(
   };
 }
 
+
+
 export default function PixelGrid() {
   const [grid, setGrid] = useState<string[][]>(Array(GRID_SIZE).fill(Array(GRID_SIZE).fill('#FFFFFF')));
   const [selectedColor, setSelectedColor] = useState('#000000');
@@ -42,7 +44,6 @@ export default function PixelGrid() {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const isPanning = useRef(false); // Is panning active?
-  
 
   useEffect(() => {
     const fetchGrid = async () => {
@@ -165,60 +166,38 @@ export default function PixelGrid() {
     });
   };
 
-  // Handle zoom for mobile (Pinch-to-zoom)
+  // Handle grid panning with mouse movement
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (!isPanning.current) return;
 
+    const deltaX = event.movementX;
+    const deltaY = event.movementY;
 
-  // Handle panning for mobile (Touch dragging)
-  const handleTouchStart = (event: React.TouchEvent) => {
-    if (event.touches.length === 1) {
-      isPanning.current = true;
-    }
+    setOffset((prevOffset) => ({
+      x: prevOffset.x + deltaX,
+      y: prevOffset.y + deltaY,
+    }));
   };
 
-  const handleTouchEnd = () => {
-    isPanning.current = false;
-  };
-
-  const handleTouchMoveForPanning = (event: React.TouchEvent) => {
-    if (isPanning.current && event.touches.length === 1) {
-      const touch = event.touches[0];
-      const deltaX = touch.clientX - event.changedTouches[0].clientX;
-      const deltaY = touch.clientY - event.changedTouches[0].clientY;
-
-      setOffset((prevOffset) => ({
-        x: prevOffset.x + deltaX,
-        y: prevOffset.y + deltaY,
-      }));
-    }
-  };
-
-  // Handle pixel selection on hover (for both desktop and mobile)
-  const handleMouseHover = (event: React.MouseEvent | React.TouchEvent) => {
-    const isTouchEvent = 'touches' in event;  // Checks if it's a TouchEvent
-  
-    const mouseX = isTouchEvent
-      ? event.touches[0].clientX  // For TouchEvent, use touches[0]
-      : event.clientX;  // For MouseEvent, use clientX
-  
-    const mouseY = isTouchEvent
-      ? event.touches[0].clientY  // For TouchEvent, use touches[0]
-      : event.clientY;  // For MouseEvent, use clientY
-  
+  // Handle pixel selection on hover
+  const handleMouseHover = (event: React.MouseEvent) => {
     if (selectedPixel) return;
-  
+
     const container = gridContainerRef.current;
     if (!container) return;
-  
+
     const rect = container.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+
     const pixelSize = 15 * scale;
-    const x = Math.floor((mouseX - rect.left) / pixelSize);
-    const y = Math.floor((mouseY - rect.top) / pixelSize);
-  
+    const x = Math.floor(mouseX / pixelSize);
+    const y = Math.floor(mouseY / pixelSize);
+
     if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
       setSelectedPixel({ x, y });
     }
   };
-  
 
   const startPanning = () => {
     isPanning.current = true;
@@ -237,7 +216,7 @@ export default function PixelGrid() {
     <div
       onWheel={handleZoom}
       onMouseMove={(e) => {
-        handleMouseHover(e);
+        handleMouseMove(e);
         handleMouseHover(e);
       }}
       onMouseDown={startPanning}
@@ -267,10 +246,6 @@ export default function PixelGrid() {
           transformOrigin: 'center',
           overflow: 'hidden',
         }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchMoveForPanning}
-        
       >
         <div
           ref={gridRef}
