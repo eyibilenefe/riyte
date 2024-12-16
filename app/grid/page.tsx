@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -30,8 +31,6 @@ function debounce<T extends (...args: unknown[]) => void>(
   };
 }
 
-
-
 export default function PixelGrid() {
   const [grid, setGrid] = useState<string[][]>(Array(GRID_SIZE).fill(Array(GRID_SIZE).fill('#FFFFFF')));
   const [selectedColor, setSelectedColor] = useState('#000000');
@@ -43,6 +42,7 @@ export default function PixelGrid() {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const isPanning = useRef(false); // Is panning active?
+  const touchStartDistance = useRef(0); // Used to track the initial distance between touches for pinch zoom
 
   useEffect(() => {
     const fetchGrid = async () => {
@@ -154,17 +154,10 @@ export default function PixelGrid() {
 
   const debouncedPlacePixel = debounce(placePixel, 300);
 
-  // Handle zoom with mouse wheel and touch events (mobile support)
-  const handleZoom = (event: React.WheelEvent | React.TouchEvent) => {
+  // Handle zoom with mouse wheel
+  const handleZoom = (event: React.WheelEvent) => {
     event.preventDefault();
-    let zoomFactor = 1;
-    if (event.type === 'wheel') {
-      zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
-    } else if (event.type === 'touchmove') {
-      const touch = event.touches[0];
-      const touchStart = event.changedTouches[0];
-      zoomFactor = touch.clientY < touchStart.clientY ? 1.1 : 0.9;
-    }
+    const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
     setScale((prevScale) => {
       let newScale = prevScale * zoomFactor;
       newScale = Math.max(0.5, Math.min(2, newScale));
@@ -172,42 +165,81 @@ export default function PixelGrid() {
     });
   };
 
-  // Handle grid panning with mouse movement (mouse or touch)
-  const handleMouseMove = (event: React.MouseEvent | React.TouchEvent) => {
-    if (!isPanning.current) return;
+  // Handle zoom for mobile (Pinch-to-zoom)
+  const handleTouchMove = (event: React.TouchEvent) => {
+    if (event.touches.length === 2) {
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+      
+      if (touchStartDistance.current === 0) {
+        touchStartDistance.current = distance;
+      }
 
-    const deltaX = 'movementX' in event ? event.movementX : event.changedTouches[0].clientX;
-    const deltaY = 'movementY' in event ? event.movementY : event.changedTouches[0].clientY;
+      const zoomFactor = distance / touchStartDistance.current;
+      setScale((prevScale) => {
+        let newScale = prevScale * zoomFactor;
+        newScale = Math.max(0.5, Math.min(2, newScale));
+        return newScale;
+      });
 
-    setOffset((prevOffset) => ({
-      x: prevOffset.x + deltaX,
-      y: prevOffset.y + deltaY,
-    }));
+      touchStartDistance.current = distance; // Update the previous distance
+    }
   };
 
-  // Handle pixel selection on hover (same for mouse and touch)
-  const handleMouseHover = (event: React.MouseEvent | React.TouchEvent) => {
-    if (selectedPixel) return;
+  // Handle panning for mobile (Touch dragging)
+  const handleTouchStart = (event: React.TouchEvent) => {
+    if (event.touches.length === 1) {
+      isPanning.current = true;
+    }
+  };
 
+  const handleTouchEnd = () => {
+    isPanning.current = false;
+  };
+
+  const handleTouchMoveForPanning = (event: React.TouchEvent) => {
+    if (isPanning.current && event.touches.length === 1) {
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - event.changedTouches[0].clientX;
+      const deltaY = touch.clientY - event.changedTouches[0].clientY;
+
+      setOffset((prevOffset) => ({
+        x: prevOffset.x + deltaX,
+        y: prevOffset.y + deltaY,
+      }));
+    }
+  };
+
+  // Handle pixel selection on hover (for both desktop and mobile)
+  const handleMouseHover = (event: React.MouseEvent | React.TouchEvent) => {
+    const isTouchEvent = 'touches' in event;  // Checks if it's a TouchEvent
+  
+    const mouseX = isTouchEvent
+      ? event.touches[0].clientX  // For TouchEvent, use touches[0]
+      : event.clientX;  // For MouseEvent, use clientX
+  
+    const mouseY = isTouchEvent
+      ? event.touches[0].clientY  // For TouchEvent, use touches[0]
+      : event.clientY;  // For MouseEvent, use clientY
+  
+    if (selectedPixel) return;
+  
     const container = gridContainerRef.current;
     if (!container) return;
-
+  
     const rect = container.getBoundingClientRect();
-    const mouseX = event instanceof TouchEvent
-      ? event.changedTouches[0].clientX - rect.left
-      : event.clientX - rect.left;
-    const mouseY = event instanceof TouchEvent
-      ? event.changedTouches[0].clientY - rect.top
-      : event.clientY - rect.top;
-
     const pixelSize = 15 * scale;
-    const x = Math.floor(mouseX / pixelSize);
-    const y = Math.floor(mouseY / pixelSize);
-
+    const x = Math.floor((mouseX - rect.left) / pixelSize);
+    const y = Math.floor((mouseY - rect.top) / pixelSize);
+  
     if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
       setSelectedPixel({ x, y });
     }
   };
+  
 
   const startPanning = () => {
     isPanning.current = true;
@@ -225,13 +257,10 @@ export default function PixelGrid() {
   return (
     <div
       onWheel={handleZoom}
-      onTouchMove={handleZoom} // Added touch support
       onMouseMove={(e) => {
-        handleMouseMove(e);
+        handleMouseHover(e);
         handleMouseHover(e);
       }}
-      onTouchStart={startPanning}  // Added touch support for panning
-      onTouchEnd={stopPanning}    // Added touch support for panning
       onMouseDown={startPanning}
       onMouseUp={stopPanning}
       onMouseLeave={stopPanning}
@@ -246,7 +275,127 @@ export default function PixelGrid() {
         cursor: isPanning.current ? 'grabbing' : 'grab',
       }}
     >
-      {/* Rest of the component code remains unchanged */}
+      <div
+        ref={gridContainerRef}
+        className="grid-container"
+        style={{
+          width: `${GRID_SIZE * 15}px`,
+          height: `${GRID_SIZE * 15}px`,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+          transformOrigin: 'center',
+          overflow: 'hidden',
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMoveForPanning}
+        
+      >
+        <div
+          ref={gridRef}
+          className="grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${GRID_SIZE}, 15px)`,
+            gridTemplateRows: `repeat(${GRID_SIZE}, 15px)`,
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          {grid.map((row, y) =>
+            row.map((color, x) => (
+              <div
+                key={`${x}-${y}`}
+                data-x={x} data-y={y}
+                style={{
+                  width: '15px',
+                  height: '15px',
+                  backgroundColor: color,
+                  cursor: 'pointer',
+                  boxSizing: 'border-box',
+                  outline: selectedPixel?.x === x && selectedPixel?.y === y ? '2px solid black' : 'none',
+                  transition: 'background-color 0.2s ease',
+                  boxShadow: selectedPixel?.x === x && selectedPixel?.y === y ? '0px 0px 10px rgba(0, 0, 0, 0.2)' : 'none', // Highlight selected pixel
+                }}
+                onClick={() => handlePixelSelect(x, y)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {selectedPixel && showColorPicker && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'auto',
+            backgroundColor: '#fff',
+            padding: '10px 20px',
+            zIndex: 100,
+            borderRadius: '10px',
+            boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{
+            fontWeight: 'bold',
+            marginBottom: '10px',
+            fontSize: '16px',
+            color: '#333'
+          }}>
+            Select Color:
+          </span>
+          <div className="color-palette" style={{
+            display: 'flex',  // Yatay hizalama
+            overflowX: 'auto',  // Scroll ekle
+            gap: '8px',  // Daha küçük mesafe
+            paddingBottom: '15px',
+          }}>
+            {colorPalette.map((color, index) => (
+              <div
+                key={`${color}-${index}`} // Use both color and index to ensure uniqueness
+                style={{
+                  backgroundColor: color,
+                  width: '30px',  // Küçültülmüş kutu boyutu
+                  height: '30px', // Küçültülmüş kutu boyutu
+                  borderRadius: '50%',  // Yuvarlak kutular
+                  cursor: 'pointer',
+                  border: selectedColor === color ? '4px solid #000' : 'none',
+                  boxShadow: selectedColor === color ? '0px 0px 10px rgba(0, 0, 0, 0.2)' : 'none',
+                  transform: selectedColor === color ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                }}
+                onClick={() => setSelectedColor(color)}
+              />
+            ))}
+          </div>
+          <button
+            onClick={debouncedPlacePixel}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#4CAF50',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              borderRadius: '5px',
+              fontSize: '16px',
+              transition: 'background-color 0.3s ease, transform 0.2s ease',
+              width: '100%',
+              textAlign: 'center',
+              boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            Place Pixel
+          </button>
+        </div>
+      )}
     </div>
   );
 }
