@@ -42,7 +42,7 @@ export default function PixelGrid() {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const isPanning = useRef(false); // Is panning active?
-  const touchStartDistance = useRef(0); // Used to track the initial distance between touches for pinch zoom
+  
 
   useEffect(() => {
     const fetchGrid = async () => {
@@ -166,7 +166,7 @@ export default function PixelGrid() {
   };
 
   // Handle zoom for mobile (Pinch-to-zoom)
-  
+
 
   // Handle panning for mobile (Touch dragging)
   const handleTouchStart = (event: React.TouchEvent) => {
