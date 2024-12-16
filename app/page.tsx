@@ -42,7 +42,7 @@ export default function Home() {
             Go to Login
           </button>
         </div>
-      ) : user === false ? (
+      ) : user === null ? (
         <p className="text-white text-xl">Loading...</p>
       ) : (
         <p className="text-white text-xl">Redirecting to grid...</p>
