@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 
 const GRID_SIZE = 50;  // Fixed grid size
-const COOLDOWN_TIME = 5 * 60 * 1000;  // 5 minutes
+const COOLDOWN_TIME = 1 * 60 * 1000;  // 5 minutes
 
 interface Pixel {
   x: number;
@@ -20,19 +20,18 @@ const colorPalette = [
   '#4B0082', '#8A2BE2', '#FF1493', '#FFD700', '#32CD32'
 ];
 
-function debounce(func: Function, wait: number) {
+function debounce<T extends (...args: unknown[]) => void>(func: T, wait: number) {
   let timeout: NodeJS.Timeout;
-  return function(...args: any[]) {
-    const context = this;
+  return function(...args: Parameters<T>) {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(context, args), wait);
+    timeout = setTimeout(() => func.apply(this, args), wait);
   };
 }
+
 
 export default function PixelGrid() {
   const [grid, setGrid] = useState<string[][]>(Array(GRID_SIZE).fill(Array(GRID_SIZE).fill('#FFFFFF')));
   const [selectedColor, setSelectedColor] = useState('#000000');
-  const [lastPlacedTime, setLastPlacedTime] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [selectedPixel, setSelectedPixel] = useState<{ x: number, y: number } | null>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -132,7 +131,7 @@ export default function PixelGrid() {
     }
 
     // Upsert pixel (with conflict handling)
-    const { data: newData, error: upsertError } = await supabase
+    const { error: upsertError } = await supabase
       .from('pixels')
       .upsert(
         { x, y, color: selectedColor, user_id: user.id },
@@ -146,7 +145,6 @@ export default function PixelGrid() {
       console.error('Error placing pixel:', upsertError.message || upsertError.details || upsertError);
       alert("There was an error placing the pixel, please try again.");
     } else {
-      setLastPlacedTime(now);
       setSelectedPixel(null);
       setShowColorPicker(false);
     }
@@ -198,7 +196,7 @@ export default function PixelGrid() {
     }
   };
 
-  const startPanning = (event: React.MouseEvent) => {
+  const startPanning = () => {
     isPanning.current = true;
   };
 
