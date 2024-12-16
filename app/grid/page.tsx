@@ -136,14 +136,13 @@ export default function PixelGrid() {
 
     // Upsert pixel (with conflict handling)
     const { error: upsertError } = await supabase
-      .from('pixels')
-      .upsert(
-        { x, y, color: selectedColor, user_id: user.id },
-        {
-          onConflict: ['x', 'y'],
-          returning: 'representation'
-        }
-      );
+    .from('pixels')
+    .upsert(
+      [
+        { x, y, color: selectedColor, user_id: user.id }
+      ],
+    );
+
 
     if (upsertError) {
       console.error('Error placing pixel:', upsertError.message || upsertError.details || upsertError);
