@@ -166,28 +166,7 @@ export default function PixelGrid() {
   };
 
   // Handle zoom for mobile (Pinch-to-zoom)
-  const handleTouchMove = (event: React.TouchEvent) => {
-    if (event.touches.length === 2) {
-      const touch1 = event.touches[0];
-      const touch2 = event.touches[1];
-      const distance = Math.sqrt(
-        Math.pow(touch2.clientX - touch1.clientX, 2) + Math.pow(touch2.clientY - touch1.clientY, 2)
-      );
-      
-      if (touchStartDistance.current === 0) {
-        touchStartDistance.current = distance;
-      }
-
-      const zoomFactor = distance / touchStartDistance.current;
-      setScale((prevScale) => {
-        let newScale = prevScale * zoomFactor;
-        newScale = Math.max(0.5, Math.min(2, newScale));
-        return newScale;
-      });
-
-      touchStartDistance.current = distance; // Update the previous distance
-    }
-  };
+  
 
   // Handle panning for mobile (Touch dragging)
   const handleTouchStart = (event: React.TouchEvent) => {
