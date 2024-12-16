@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 
 const GRID_SIZE = 50;  // Fixed grid size
-const COOLDOWN_TIME = 1 * 60 * 1000;  // 5 minutes
+const COOLDOWN_TIME = 1 * 60 * 1000;  // 1 minute cooldown time
 
 interface Pixel {
   x: number;
@@ -30,8 +30,6 @@ function debounce<T extends (...args: unknown[]) => void>(
     timeout = setTimeout(() => func.apply(this, args), wait);
   };
 }
-
-
 
 export default function PixelGrid() {
   const [grid, setGrid] = useState<string[][]>(Array(GRID_SIZE).fill(Array(GRID_SIZE).fill('#FFFFFF')));
@@ -110,7 +108,6 @@ export default function PixelGrid() {
     const { x, y } = selectedPixel;
     const now = Date.now();
 
-    // Query the last pixel placed or updated by the user
     const { data, error } = await supabase
       .from('pixels')
       .select('created_at, updated_at')
@@ -134,7 +131,6 @@ export default function PixelGrid() {
       return;
     }
 
-    // Upsert pixel (with conflict handling)
     const { error: upsertError } = await supabase
     .from('pixels')
     .upsert(
@@ -142,7 +138,6 @@ export default function PixelGrid() {
         { x, y, color: selectedColor, user_id: user.id }
       ],
     );
-
 
     if (upsertError) {
       console.error('Error placing pixel:', upsertError.message || upsertError.details || upsertError);
@@ -155,7 +150,6 @@ export default function PixelGrid() {
 
   const debouncedPlacePixel = debounce(placePixel, 300);
 
-  // Handle zoom with mouse wheel
   const handleZoom = (event: React.WheelEvent) => {
     event.preventDefault();
     const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
@@ -166,7 +160,6 @@ export default function PixelGrid() {
     });
   };
 
-  // Handle grid panning with mouse movement
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!isPanning.current) return;
 
@@ -179,7 +172,6 @@ export default function PixelGrid() {
     }));
   };
 
-  // Handle pixel selection on hover
   const handleMouseHover = (event: React.MouseEvent) => {
     if (selectedPixel) return;
 
@@ -271,7 +263,7 @@ export default function PixelGrid() {
                   boxSizing: 'border-box',
                   outline: selectedPixel?.x === x && selectedPixel?.y === y ? '2px solid black' : 'none',
                   transition: 'background-color 0.2s ease',
-                  boxShadow: selectedPixel?.x === x && selectedPixel?.y === y ? '0px 0px 10px rgba(0, 0, 0, 0.2)' : 'none', // Highlight selected pixel
+                  boxShadow: selectedPixel?.x === x && selectedPixel?.y === y ? '0px 0px 10px rgba(0, 0, 0, 0.2)' : 'none',
                 }}
                 onClick={() => handlePixelSelect(x, y)}
               />
@@ -314,12 +306,12 @@ export default function PixelGrid() {
           }}>
             {colorPalette.map((color, index) => (
               <div
-                key={`${color}-${index}`} // Use both color and index to ensure uniqueness
+                key={`${color}-${index}`}
                 style={{
                   backgroundColor: color,
-                  width: '30px',  // Küçültülmüş kutu boyutu
-                  height: '30px', // Küçültülmüş kutu boyutu
-                  borderRadius: '50%',  // Yuvarlak kutular
+                  width: '30px', 
+                  height: '30px', 
+                  borderRadius: '50%',
                   cursor: 'pointer',
                   border: selectedColor === color ? '4px solid #000' : 'none',
                   boxShadow: selectedColor === color ? '0px 0px 10px rgba(0, 0, 0, 0.2)' : 'none',
