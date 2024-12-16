@@ -20,13 +20,17 @@ const colorPalette = [
   '#4B0082', '#8A2BE2', '#FF1493', '#FFD700', '#32CD32'
 ];
 
-function debounce<T extends (...args: unknown[]) => void>(func: T, wait: number) {
+function debounce<T extends (...args: unknown[]) => void>(
+  func: T, 
+  wait: number
+): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout;
-  return function(...args: Parameters<T>) {
+  return function(this: ThisParameterType<T>, ...args: Parameters<T>) {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), wait);
   };
 }
+
 
 
 export default function PixelGrid() {
