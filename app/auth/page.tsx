@@ -34,7 +34,7 @@ export default function AuthPage() {
     checkSession()
   }, [router])
 
-  // Giriş işlemi
+  // Handle Sign In (Login)
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -60,7 +60,7 @@ export default function AuthPage() {
     }
   }
 
-  // Kayıt işlemi
+  // Handle Sign Up (Registration)
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -87,8 +87,8 @@ export default function AuthPage() {
     if (error) {
       alert(error.message)
     } else {
-      alert('Kayıt başarılı! Lütfen giriş yapın.')
-      setIsLogin(true) // Kayıt başarılı olduğunda login formunu göster
+      alert('Kayıt başarılı! Lütfen giriş yapın. Bir doğrulama e-postası alacaksınız.')
+      setIsLogin(true) // After successful registration, show the login form
     }
   }
 
