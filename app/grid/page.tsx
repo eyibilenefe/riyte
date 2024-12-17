@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
@@ -21,7 +22,7 @@ const colorPalette = [
 ];
 
 function debounce<T extends (...args: unknown[]) => void>(
-  func: T, 
+  func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout;
@@ -44,8 +45,6 @@ export default function PixelGrid() {
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const isPanning = useRef(false); // Is panning active?
   
-  const isMobile = window.innerWidth <= 768;  // Detect if the device is mobile
-
   useEffect(() => {
     const fetchGrid = async () => {
       const { data, error } = await supabase
@@ -96,10 +95,12 @@ export default function PixelGrid() {
   }, []);
 
   useEffect(() => {
-    // Center the grid initially
-    const initialOffsetX = (window.innerWidth - GRID_SIZE * 15) / 2;
-    const initialOffsetY = (window.innerHeight - GRID_SIZE * 15) / 2;
-    setOffset({ x: initialOffsetX, y: initialOffsetY });
+    // Center the grid initially only on the client side (window is available only in the browser)
+    if (typeof window !== 'undefined') {
+      const initialOffsetX = (window.innerWidth - GRID_SIZE * 15) / 2;
+      const initialOffsetY = (window.innerHeight - GRID_SIZE * 15) / 2;
+      setOffset({ x: initialOffsetX, y: initialOffsetY });
+    }
   }, []);
 
   useEffect(() => {
@@ -109,7 +110,7 @@ export default function PixelGrid() {
       interval = setInterval(() => {
         setRemainingCooldown((prev) => prev - 1);
       }, 1000);
-    } 
+    }
 
     return () => {
       clearInterval(interval);
@@ -170,8 +171,6 @@ export default function PixelGrid() {
   const debouncedPlacePixel = debounce(placePixel, 300);
 
   const handleZoom = (event: React.WheelEvent) => {
-    if (isMobile) return;  // Disable zoom on mobile
-
     event.preventDefault();
     const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
     setScale((prevScale) => {
@@ -182,9 +181,7 @@ export default function PixelGrid() {
   };
 
   const handleTouchZoom = (event: React.TouchEvent) => {
-    if (isMobile && event.touches.length !== 2) return;  // Only allow zoom if two touches are detected
-
-    if (!isMobile) {
+    if (event.touches.length === 2) {
       const distance = Math.hypot(
         event.touches[0].clientX - event.touches[1].clientX,
         event.touches[0].clientY - event.touches[1].clientY
@@ -198,7 +195,7 @@ export default function PixelGrid() {
   };
 
   const handleMouseMove = (event: React.MouseEvent) => {
-    if (!isPanning.current || isMobile) return;  // Disable panning on mobile
+    if (!isPanning.current) return;
 
     const deltaX = event.movementX;
     const deltaY = event.movementY;
@@ -210,12 +207,10 @@ export default function PixelGrid() {
   };
 
   const startPanning = () => {
-    if (isMobile) return;  // Disable panning on mobile
     isPanning.current = true;
   };
 
   const stopPanning = () => {
-    if (isMobile) return;  // Disable panning on mobile
     isPanning.current = false;
   };
 
@@ -228,7 +223,9 @@ export default function PixelGrid() {
     <div
       onWheel={handleZoom}
       onTouchMove={handleTouchZoom}
-      onMouseMove={(e) => handleMouseMove(e)}
+      onMouseMove={(e) => {
+        handleMouseMove(e);
+      }}
       onMouseDown={startPanning}
       onMouseUp={stopPanning}
       onMouseLeave={stopPanning}
@@ -247,8 +244,8 @@ export default function PixelGrid() {
         ref={gridContainerRef}
         className="grid-container"
         style={{
-          width: isMobile ? `${GRID_SIZE * 15}px` : `${GRID_SIZE * 15}px`,
-          height: isMobile ? `${GRID_SIZE * 15}px` : `${GRID_SIZE * 15}px`,
+          width: `${GRID_SIZE * 15}px`,
+          height: `${GRID_SIZE * 15}px`,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -333,7 +330,7 @@ export default function PixelGrid() {
               Time left: {remainingCooldown}s
             </div>
           )}
-          
+
           {/* Tick Button */}
           <button
             onClick={debouncedPlacePixel}
