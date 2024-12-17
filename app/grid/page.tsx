@@ -43,7 +43,7 @@ export default function PixelGrid() {
   const [remainingCooldown, setRemainingCooldown] = useState(0); // Track remaining cooldown time
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
-  const isPanning = useRef(false); // Is panning active?
+  const isPanning = useRef<boolean>(false); // Is panning active?
   
   useEffect(() => {
     const fetchGrid = async () => {
@@ -182,15 +182,23 @@ export default function PixelGrid() {
 
   const handleTouchZoom = (event: React.TouchEvent) => {
     if (event.touches.length === 2) {
-      const distance = Math.hypot(
-        event.touches[0].clientX - event.touches[1].clientX,
-        event.touches[0].clientY - event.touches[1].clientY
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      const currentDistance = Math.hypot(
+        touch1.clientX - touch2.clientX,
+        touch1.clientY - touch2.clientY
       );
-      setScale((prevScale) => {
-        let newScale = prevScale * distance / 200;
-        newScale = Math.max(0.5, Math.min(2, newScale));
-        return newScale;
-      });
+
+      if (!isPanning.current) {
+        isPanning.current = true;
+      } else {
+        const scaleChange = currentDistance / (isPanning.current ? 1 : currentDistance);
+        setScale((prevScale) => {
+          let newScale = prevScale * scaleChange;
+          newScale = Math.max(0.5, Math.min(2, newScale));
+          return newScale;
+        });
+      }
     }
   };
 
@@ -219,36 +227,13 @@ export default function PixelGrid() {
     setShowColorPicker(true);
   };
 
-  const handleTouchStart = (event: React.TouchEvent) => {
-    if (event.touches.length === 1) {
-      isPanning.current = true;
-    }
-  };
-
-  const handleTouchEnd = () => {
-    isPanning.current = false;
-  };
-
-  const handleTouchMove = (event: React.TouchEvent) => {
-    if (!isPanning.current) return;
-
-    const touch = event.touches[0];
-    const deltaX = touch.clientX - (offset.x || 0);
-    const deltaY = touch.clientY - (offset.y || 0);
-
-    setOffset((prevOffset) => ({
-      x: prevOffset.x + deltaX,
-      y: prevOffset.y + deltaY,
-    }));
-  };
-
   return (
     <div
       onWheel={handleZoom}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onMouseMove={handleMouseMove}
+      onTouchMove={handleTouchZoom}
+      onMouseMove={(e) => {
+        handleMouseMove(e);
+      }}
       onMouseDown={startPanning}
       onMouseUp={stopPanning}
       onMouseLeave={stopPanning}
