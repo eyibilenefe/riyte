@@ -3,74 +3,178 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255; /* Beyaz metin */
-  --background-start-rgb: 0, 0, 0; /* Siyah arka plan */
-  --background-end-rgb: 30, 30, 30; /* Daha koyu siyah arka plan */
+  --foreground-rgb: 255, 255, 255; /* Default: White text */
+  --background-start-rgb: 0, 0, 0; /* Default: Black background */
+  --background-end-rgb: 30, 30, 30; /* Darker black background */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 0, 255, 255; /* Turkuaz metin */
+    --foreground-rgb: 0, 255, 255; /* Dark mode: Turquoise text */
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 30, 30, 30;
   }
 }
 
 body {
-  font-family: 'Press Start 2P', sans-serif; /* Pixel font */
+  font-family: 'Press Start 2P', sans-serif;
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-    to bottom,
-    rgb(var(--background-start-rgb)),
-    rgb(var(--background-end-rgb))
-  );
+  background: linear-gradient(to bottom, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
   padding: 0;
   margin: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 .container {
-  background-color: rgb(0, 0, 0);
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
+  @apply bg-black p-6 rounded-lg shadow-2xl max-w-xs w-full text-center border-2 border-opacity-10 border-white;
+  backdrop-filter: blur(10px); /* Adds a blurred effect behind the container */
 }
 
 button {
-  background-color: rgb(0, 0, 0);
-  color: rgb(255, 255, 255);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 20px;
-  text-transform: uppercase;
-  font-size: 14px;
-  letter-spacing: 2px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  @apply bg-black text-white border-2 border-opacity-30 py-3 px-6 uppercase text-lg tracking-wide cursor-pointer rounded-lg mt-5 transition-all duration-300 ease-in-out;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Added shadow for depth */
 }
 
 button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: rgb(0, 255, 255);
+  @apply bg-opacity-20 text-cyan-400 transform scale-105;
 }
 
 input {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  background-color: rgb(30, 30, 30);
-  color: rgb(255, 255, 255);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  font-size: 14px;
-  letter-spacing: 1px;
+  @apply w-full p-3 mt-3 bg-gray-800 text-white border-2 border-opacity-30 border-white text-lg rounded-md;
+  transition: all 0.3s ease;
 }
 
 input:focus {
-  border-color: rgb(0, 255, 255);
-  outline: none;
+  @apply border-cyan-400 outline-none;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5); /* Focus glow effect */
+}
+
+@media (max-width: 480px) {
+  body {
+    @apply p-5;
+  }
+
+  .container {
+    @apply max-w-full p-4 shadow-xl;
+  }
+
+  button {
+    @apply py-2 px-4 text-sm;
+  }
+
+  input {
+    @apply py-2 text-sm;
+  }
+}
+
+@media (max-width: 320px) {
+  button {
+    @apply py-1 px-3 text-xs;
+  }
+
+  input {
+    @apply py-1 text-xs;
+  }
+}
+
+.grid-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform-origin: center;
+  transition: transform 0.3s ease;
+  border-radius: 15px;  /* Rounded corners */
+  overflow: hidden;
+}
+
+.grid {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(50, 15px);
+  grid-template-rows: repeat(50, 15px);
+  width: 100%;
+  height: 100%;
+}
+
+.grid div {
+  width: 15px;
+  height: 15px;
+  background-color: #ffffff;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  border-radius: 4px; /* Rounded corners for grid cells */
+}
+
+.grid div:hover {
+  transform: scale(1.1); /* Slight zoom on hover */
+  box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+.color-picker {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px); /* Slight blur behind the color picker */
+}
+
+.color-picker div {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border 0.3s ease, transform 0.2s ease;
+}
+
+.color-picker div:hover {
+  transform: scale(1.2); /* Hover zoom effect */
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.color-picker .selected {
+  border: 3px solid black;
+}
+
+.timer {
+  font-size: 14px;
+  color: red;
+  margin-left: 10px;
+  font-weight: bold; /* Make timer text bold */
+}
+
+.place-button {
+  padding: 12px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.place-button:hover {
+  transform: scale(1.2);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Cooldown timer styling */
+.cooldown-timer {
+  font-size: 14px;
+  color: #FF4B4B;
+  font-weight: bold;
+  margin-left: 10px;
 }
