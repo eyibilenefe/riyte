@@ -27,6 +27,8 @@ body {
   align-items: center;
   min-height: 100vh;
   overflow: hidden;
+  touch-action: none;
+  user-select: none;
 }
 
 .container {
@@ -69,23 +71,6 @@ input:focus {
   input {
     @apply py-2 text-sm;
   }
-
-  .grid-container {
-    width: 100%;
-    height: auto;
-    overflow: auto;
-    padding: 10px;
-  }
-
-  .grid {
-    grid-template-columns: repeat(50, 8px);
-    grid-template-rows: repeat(50, 8px);
-  }
-
-  .grid div {
-    width: 8px;
-    height: 8px;
-  }
 }
 
 @media (max-width: 320px) {
@@ -96,16 +81,6 @@ input:focus {
   input {
     @apply py-1 text-xs;
   }
-
-  .grid {
-    grid-template-columns: repeat(50, 6px);
-    grid-template-rows: repeat(50, 6px);
-  }
-
-  .grid div {
-    width: 6px;
-    height: 6px;
-  }
 }
 
 .grid-container {
@@ -114,9 +89,10 @@ input:focus {
   align-items: center;
   transform-origin: center;
   transition: transform 0.3s ease;
-  border-radius: 15px;
+  border-radius: 15px;  /* Rounded corners */
   overflow: hidden;
   max-width: 100%;
+  touch-action: none;
 }
 
 .grid {
@@ -126,7 +102,6 @@ input:focus {
   grid-template-rows: repeat(50, 15px);
   width: 100%;
   height: 100%;
-  max-width: 100%;
 }
 
 .grid div {
