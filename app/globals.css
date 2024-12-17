@@ -69,6 +69,22 @@ input:focus {
   input {
     @apply py-2 text-sm;
   }
+
+  .grid-container {
+    width: 100%;
+    height: auto;
+    overflow-x: auto; /* Yatay kaydırma ekle */
+  }
+
+  .grid {
+    grid-template-columns: repeat(50, 10px); /* Daha küçük hücreler */
+    grid-template-rows: repeat(50, 10px);
+  }
+
+  .grid div {
+    width: 10px;
+    height: 10px;
+  }
 }
 
 @media (max-width: 320px) {
@@ -79,6 +95,11 @@ input:focus {
   input {
     @apply py-1 text-xs;
   }
+
+  .grid div {
+    width: 8px;
+    height: 8px;
+  }
 }
 
 .grid-container {
@@ -87,8 +108,9 @@ input:focus {
   align-items: center;
   transform-origin: center;
   transition: transform 0.3s ease;
-  border-radius: 15px;  /* Rounded corners */
+  border-radius: 15px;
   overflow: hidden;
+  max-width: 100%; /* Mobil uyumluluk için */
 }
 
 .grid {
@@ -98,6 +120,7 @@ input:focus {
   grid-template-rows: repeat(50, 15px);
   width: 100%;
   height: 100%;
+  max-width: 100%; /* Mobil uyumluluk için */
 }
 
 .grid div {
@@ -107,11 +130,11 @@ input:focus {
   cursor: pointer;
   box-sizing: border-box;
   transition: background-color 0.3s ease, transform 0.1s ease;
-  border-radius: 4px; /* Rounded corners for grid cells */
+  border-radius: 4px;
 }
 
 .grid div:hover {
-  transform: scale(1.1); /* Slight zoom on hover */
+  transform: scale(1.1);
   box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
 }
 
@@ -128,7 +151,7 @@ input:focus {
   padding: 10px;
   border-radius: 10px;
   box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(5px); /* Slight blur behind the color picker */
+  backdrop-filter: blur(5px);
 }
 
 .color-picker div {
@@ -140,7 +163,7 @@ input:focus {
 }
 
 .color-picker div:hover {
-  transform: scale(1.2); /* Hover zoom effect */
+  transform: scale(1.2);
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
@@ -152,7 +175,7 @@ input:focus {
   font-size: 14px;
   color: red;
   margin-left: 10px;
-  font-weight: bold; /* Make timer text bold */
+  font-weight: bold;
 }
 
 .place-button {
@@ -171,7 +194,6 @@ input:focus {
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
 }
 
-/* Cooldown timer styling */
 .cooldown-timer {
   font-size: 14px;
   color: #FF4B4B;
