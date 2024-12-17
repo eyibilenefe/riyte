@@ -27,8 +27,6 @@ body {
   align-items: center;
   min-height: 100vh;
   overflow: hidden;
-  touch-action: none;
-  user-select: none;
 }
 
 .container {
@@ -89,10 +87,10 @@ input:focus {
   align-items: center;
   transform-origin: center;
   transition: transform 0.3s ease;
-  border-radius: 15px;  /* Rounded corners */
-  overflow: hidden;
+  border-radius: 15px;
+  overflow: auto;
   max-width: 100%;
-  touch-action: none;
+  touch-action: pan-x pan-y;
 }
 
 .grid {

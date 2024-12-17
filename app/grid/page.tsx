@@ -219,13 +219,36 @@ export default function PixelGrid() {
     setShowColorPicker(true);
   };
 
+  const handleTouchStart = (event: React.TouchEvent) => {
+    if (event.touches.length === 1) {
+      isPanning.current = true;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    isPanning.current = false;
+  };
+
+  const handleTouchMove = (event: React.TouchEvent) => {
+    if (!isPanning.current) return;
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - (offset.x || 0);
+    const deltaY = touch.clientY - (offset.y || 0);
+
+    setOffset((prevOffset) => ({
+      x: prevOffset.x + deltaX,
+      y: prevOffset.y + deltaY,
+    }));
+  };
+
   return (
     <div
       onWheel={handleZoom}
-      onTouchMove={handleTouchZoom}
-      onMouseMove={(e) => {
-        handleMouseMove(e);
-      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseMove={handleMouseMove}
       onMouseDown={startPanning}
       onMouseUp={stopPanning}
       onMouseLeave={stopPanning}
