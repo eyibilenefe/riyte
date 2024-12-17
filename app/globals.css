@@ -87,10 +87,8 @@ input:focus {
   align-items: center;
   transform-origin: center;
   transition: transform 0.3s ease;
-  border-radius: 15px;
+  border-radius: 15px;  /* Rounded corners */
   overflow: hidden;
-  max-width: 100%;
-  touch-action: pan-x pan-y;
 }
 
 .grid {
