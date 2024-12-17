@@ -43,7 +43,7 @@ export default function PixelGrid() {
   const [remainingCooldown, setRemainingCooldown] = useState(0); // Track remaining cooldown time
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
-  const isPanning = useRef<boolean>(false); // Is panning active?
+  const isPanning = useRef<number | null>(null); // Is panning active?
   
   useEffect(() => {
     const fetchGrid = async () => {
@@ -189,15 +189,16 @@ export default function PixelGrid() {
         touch1.clientY - touch2.clientY
       );
 
-      if (!isPanning.current) {
-        isPanning.current = true;
+      if (isPanning.current === null) {
+        isPanning.current = currentDistance; // Başlangıçta currentDistance olarak ayarlayın
       } else {
-        const scaleChange = currentDistance / (isPanning.current ? 1 : currentDistance);
+        const scaleChange = currentDistance / isPanning.current;
         setScale((prevScale) => {
           let newScale = prevScale * scaleChange;
           newScale = Math.max(0.5, Math.min(2, newScale));
           return newScale;
         });
+        isPanning.current = currentDistance;
       }
     }
   };
@@ -213,13 +214,12 @@ export default function PixelGrid() {
       y: prevOffset.y + deltaY,
     }));
   };
-
   const startPanning = () => {
-    isPanning.current = true;
+    isPanning.current = 0; // Panning başladığında 0 olarak ayarlayın
   };
 
   const stopPanning = () => {
-    isPanning.current = false;
+    isPanning.current = null; // Panning durduğunda null olarak ayarlayın
   };
 
   const handlePixelSelect = (x: number, y: number) => {

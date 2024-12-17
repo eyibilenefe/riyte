@@ -90,7 +90,7 @@ input:focus {
   border-radius: 15px;
   overflow: auto;
   max-width: 100%;
-  touch-action: pan-x pan-y;
+  touch-action: none; /* Mobilde dokunma olaylarını daha iyi yönetmek için */
 }
 
 .grid {
