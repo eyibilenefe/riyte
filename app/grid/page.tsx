@@ -43,7 +43,7 @@ export default function PixelGrid() {
   const [remainingCooldown, setRemainingCooldown] = useState(0); // Track remaining cooldown time
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
-  const isPanning = useRef<number | { x: number; y: number } | null>(null);
+  const isPanning = useRef<{ x: number; y: number } | null>(null); // Panning durumu için
   
   useEffect(() => {
     const fetchGrid = async () => {
@@ -189,17 +189,35 @@ export default function PixelGrid() {
         touch1.clientY - touch2.clientY
       );
 
-      if (typeof isPanning.current === 'number' || isPanning.current === null) {
-        isPanning.current = currentDistance;
+      if (isPanning.current === null) {
+        isPanning.current = { x: touch1.clientX, y: touch1.clientY }; // Başlangıç konumu
       } else {
-        const scaleChange = currentDistance / (isPanning.current as unknown as number);
+        const scaleChange = currentDistance / Math.hypot(
+          isPanning.current.x - touch1.clientX,
+          isPanning.current.y - touch1.clientY
+        );
         setScale((prevScale) => {
           let newScale = prevScale * scaleChange;
           newScale = Math.max(0.5, Math.min(2, newScale));
           return newScale;
         });
-        isPanning.current = currentDistance;
+        isPanning.current = { x: touch1.clientX, y: touch1.clientY }; // Güncelle
       }
+    }
+  };
+
+  const handleTouchMove = (event: React.TouchEvent) => {
+    if (isPanning.current && event.touches.length === 1) {
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - isPanning.current.x;
+      const deltaY = touch.clientY - isPanning.current.y;
+
+      setOffset((prevOffset) => ({
+        x: prevOffset.x + deltaX,
+        y: prevOffset.y + deltaY,
+      }));
+
+      isPanning.current = { x: touch.clientX, y: touch.clientY }; // Güncelle
     }
   };
 
@@ -225,7 +243,7 @@ export default function PixelGrid() {
   };
 
   const stopPanning = () => {
-    isPanning.current = null;
+    isPanning.current = null; // Panning durdu
   };
 
   const handlePixelSelect = (x: number, y: number) => {
@@ -236,10 +254,10 @@ export default function PixelGrid() {
   return (
     <div
       onWheel={handleZoom}
-      onTouchMove={handleTouchZoom}
-      onMouseMove={(e) => {
-        handleMouseMove(e);
-      }}
+      onTouchMove={handleTouchMove}
+      onTouchStart={startPanning}
+      onTouchEnd={stopPanning}
+      onMouseMove={handleMouseMove}
       onMouseDown={startPanning}
       onMouseUp={stopPanning}
       onMouseLeave={stopPanning}
@@ -252,6 +270,7 @@ export default function PixelGrid() {
         overflow: 'hidden',
         backgroundColor: '#f0f0f0',
         cursor: isPanning.current ? 'grabbing' : 'grab',
+        touchAction: 'none',
       }}
     >
       <div

@@ -88,9 +88,9 @@ input:focus {
   transform-origin: center;
   transition: transform 0.3s ease;
   border-radius: 15px;
-  overflow: auto;
+  overflow: hidden;
   max-width: 100%;
-  touch-action: none; /* Mobilde dokunma olaylarını daha iyi yönetmek için */
+  touch-action: pan-x pan-y;
 }
 
 .grid {
