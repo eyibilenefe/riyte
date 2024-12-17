@@ -17,7 +17,7 @@ interface Pixel {
 
 const colorPalette = [
   '#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF',
-  '#4B0082', '#8A2BE2', '#FF1493', '#FFD700', '#32CD32'
+  '#4B0082', '#000000','#FFFFFF','#8A2BE2', '#FF1493', '#FFD700', '#32CD32'
 ];
 
 function debounce<T extends (...args: unknown[]) => void>(
@@ -132,12 +132,13 @@ export default function PixelGrid() {
     }
 
     const { error: upsertError } = await supabase
-    .from('pixels')
-    .upsert(
-      [
-        { x, y, color: selectedColor, user_id: user.id }
-      ],
-    );
+  .from('pixels')
+  .upsert(
+    [
+      { x, y, color: selectedColor, user_id: user.id }
+    ],
+    { onConflict: 'x,y' } // Composite key as a single string
+  );
 
     if (upsertError) {
       console.error('Error placing pixel:', upsertError.message || upsertError.details || upsertError);
