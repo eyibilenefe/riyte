@@ -102,6 +102,23 @@ export default function PixelGrid() {
       const initialOffsetY = (window.innerHeight - GRID_SIZE * 15) / 2;
       setOffset({ x: initialOffsetX, y: initialOffsetY });
     }
+
+    // Adjust grid container size based on window size
+    const handleResize = () => {
+      if (gridContainerRef.current) {
+        const containerWidth = Math.min(window.innerWidth, GRID_SIZE * 15);
+        const containerHeight = Math.min(window.innerHeight, GRID_SIZE * 15);
+        gridContainerRef.current.style.width = `${containerWidth}px`;
+        gridContainerRef.current.style.height = `${containerHeight}px`;
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial call to set the size
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -291,8 +308,6 @@ export default function PixelGrid() {
         ref={gridContainerRef}
         className="grid-container"
         style={{
-          width: `${GRID_SIZE * 15}px`,
-          height: `${GRID_SIZE * 15}px`,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
