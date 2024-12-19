@@ -243,7 +243,10 @@ export default function PixelGrid() {
   return (
     <div
       onWheel={handleZoom}
-      onTouchMove={handleTouchMove}
+      onTouchMove={(e) => {
+        handleTouchMove(e);
+        handleTouchZoom(e);
+      }}
       onTouchEnd={handleTouchEnd}
       onMouseMove={(e) => {
         handleMouseMove(e);
