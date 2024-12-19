@@ -45,6 +45,7 @@ export default function PixelGrid() {
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const isPanning = useRef(false); // Is panning active?
   const lastTouchDistance = useRef<number | null>(null); // Track last touch distance for pinch zoom
+  const touchStart = useRef<{ x: number, y: number } | null>(null);
 
   useEffect(() => {
     const fetchGrid = async () => {
@@ -138,12 +139,17 @@ export default function PixelGrid() {
   useEffect(() => {
     // Prevent default touch actions to avoid conflicts with custom zoom and pan
     const preventDefault = (e: TouchEvent) => e.preventDefault();
-    document.addEventListener('touchmove', preventDefault, { passive: false });
-    document.addEventListener('touchstart', preventDefault, { passive: false });
+    const gridElement = gridRef.current;
+    if (gridElement) {
+      gridElement.addEventListener('touchmove', preventDefault, { passive: false });
+      gridElement.addEventListener('touchstart', preventDefault, { passive: false });
+    }
 
     return () => {
-      document.removeEventListener('touchmove', preventDefault);
-      document.removeEventListener('touchstart', preventDefault);
+      if (gridElement) {
+        gridElement.removeEventListener('touchmove', preventDefault);
+        gridElement.removeEventListener('touchstart', preventDefault);
+      }
     };
   }, []);
 
@@ -200,50 +206,51 @@ export default function PixelGrid() {
 
   const debouncedPlacePixel = debounce(placePixel, 300);
 
-  const handleZoom = (event: React.WheelEvent) => {
+  const handleZoom = (event: React.WheelEvent | React.TouchEvent) => {
     event.preventDefault();
-    const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
-    setScale((prevScale) => {
-      let newScale = prevScale * zoomFactor;
-      newScale = Math.max(0.5, Math.min(2, newScale));
-      return newScale;
-    });
-  };
-
-  const handleTouchZoom = (event: React.TouchEvent) => {
-    if (event.touches.length === 2) {
+    let zoomFactor;
+    if ('deltaY' in event) {
+      zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
+    } else if (event.touches.length === 2) {
       const distance = Math.hypot(
         event.touches[0].clientX - event.touches[1].clientX,
         event.touches[0].clientY - event.touches[1].clientY
       );
       if (lastTouchDistance.current !== null) {
-        const zoomFactor = distance / lastTouchDistance.current;
-        setScale((prevScale) => {
-          let newScale = prevScale * zoomFactor;
-          newScale = Math.max(0.5, Math.min(2, newScale));
-          return newScale;
-        });
+        zoomFactor = distance / lastTouchDistance.current;
       }
       lastTouchDistance.current = distance;
+    }
+    if (zoomFactor) {
+      setScale((prevScale) => {
+        let newScale = prevScale * zoomFactor;
+        newScale = Math.max(0.5, Math.min(2, newScale));
+        return newScale;
+      });
     }
   };
 
   const handleTouchMove = (event: React.TouchEvent) => {
     if (event.touches.length === 1 && isPanning.current) {
       const touch = event.touches[0];
-      const deltaX = touch.clientX - touch.clientX;
-      const deltaY = touch.clientY - touch.clientY;
+      if (touchStart.current) {
+        const deltaX = touch.clientX - touchStart.current.x;
+        const deltaY = touch.clientY - touchStart.current.y;
 
-      setOffset((prevOffset) => ({
-        x: prevOffset.x + deltaX,
-        y: prevOffset.y + deltaY,
-      }));
+        touchStart.current = { x: touch.clientX, y: touch.clientY };
+
+        setOffset((prevOffset) => ({
+          x: prevOffset.x + deltaX,
+          y: prevOffset.y + deltaY,
+        }));
+      }
     }
   };
 
   const handleTouchStart = (event: React.TouchEvent) => {
     if (event.touches.length === 1) {
       isPanning.current = true;
+      touchStart.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
     }
   };
 
@@ -283,7 +290,7 @@ export default function PixelGrid() {
       onTouchStart={handleTouchStart}
       onTouchMove={(e) => {
         handleTouchMove(e);
-        handleTouchZoom(e);
+        handleZoom(e);
       }}
       onTouchEnd={handleTouchEnd}
       onMouseMove={(e) => {
