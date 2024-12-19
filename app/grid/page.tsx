@@ -118,6 +118,18 @@ export default function PixelGrid() {
     };
   }, [remainingCooldown]);
 
+  useEffect(() => {
+    // Prevent default touch actions to avoid conflicts with custom zoom and pan
+    const preventDefault = (e: TouchEvent) => e.preventDefault();
+    document.addEventListener('touchmove', preventDefault, { passive: false });
+    document.addEventListener('touchstart', preventDefault, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchmove', preventDefault);
+      document.removeEventListener('touchstart', preventDefault);
+    };
+  }, []);
+
   const placePixel = async () => {
     if (!selectedPixel || !user) {
       alert('Please select a pixel and sign in to place pixels');
@@ -263,6 +275,7 @@ export default function PixelGrid() {
         overflow: 'hidden',
         backgroundColor: '#f0f0f0',
         cursor: isPanning.current ? 'grabbing' : 'grab',
+        touchAction: 'none', // Disable default touch actions
       }}
     >
       <div
