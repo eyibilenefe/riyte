@@ -44,7 +44,8 @@ export default function PixelGrid() {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const isPanning = useRef(false); // Is panning active?
-  
+  const lastTouchDistance = useRef<number | null>(null); // Track last touch distance for pinch zoom
+
   useEffect(() => {
     const fetchGrid = async () => {
       const { data, error } = await supabase
@@ -186,12 +187,20 @@ export default function PixelGrid() {
         event.touches[0].clientX - event.touches[1].clientX,
         event.touches[0].clientY - event.touches[1].clientY
       );
-      setScale((prevScale) => {
-        let newScale = prevScale * distance / 200;
-        newScale = Math.max(0.5, Math.min(2, newScale));
-        return newScale;
-      });
+      if (lastTouchDistance.current !== null) {
+        const zoomFactor = distance / lastTouchDistance.current;
+        setScale((prevScale) => {
+          let newScale = prevScale * zoomFactor;
+          newScale = Math.max(0.5, Math.min(2, newScale));
+          return newScale;
+        });
+      }
+      lastTouchDistance.current = distance;
     }
+  };
+
+  const handleTouchEnd = () => {
+    lastTouchDistance.current = null;
   };
 
   const handleMouseMove = (event: React.MouseEvent) => {
@@ -204,6 +213,18 @@ export default function PixelGrid() {
       x: prevOffset.x + deltaX,
       y: prevOffset.y + deltaY,
     }));
+  };
+
+  const handleTouchMove = (event: React.TouchEvent) => {
+    if (event.touches.length === 1 && isPanning.current) {
+      const deltaX = event.touches[0].clientX - event.touches[0].clientX;
+      const deltaY = event.touches[0].clientY - event.touches[0].clientY;
+
+      setOffset((prevOffset) => ({
+        x: prevOffset.x + deltaX,
+        y: prevOffset.y + deltaY,
+      }));
+    }
   };
 
   const startPanning = () => {
@@ -222,7 +243,8 @@ export default function PixelGrid() {
   return (
     <div
       onWheel={handleZoom}
-      onTouchMove={handleTouchZoom}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       onMouseMove={(e) => {
         handleMouseMove(e);
       }}
