@@ -211,7 +211,27 @@ export default function PixelGrid() {
     }
   };
 
+  const handleTouchMove = (event: React.TouchEvent) => {
+    if (event.touches.length === 1 && isPanning.current) {
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - touch.clientX;
+      const deltaY = touch.clientY - touch.clientY;
+
+      setOffset((prevOffset) => ({
+        x: prevOffset.x + deltaX,
+        y: prevOffset.y + deltaY,
+      }));
+    }
+  };
+
+  const handleTouchStart = (event: React.TouchEvent) => {
+    if (event.touches.length === 1) {
+      isPanning.current = true;
+    }
+  };
+
   const handleTouchEnd = () => {
+    isPanning.current = false;
     lastTouchDistance.current = null;
   };
 
@@ -225,18 +245,6 @@ export default function PixelGrid() {
       x: prevOffset.x + deltaX,
       y: prevOffset.y + deltaY,
     }));
-  };
-
-  const handleTouchMove = (event: React.TouchEvent) => {
-    if (event.touches.length === 1 && isPanning.current) {
-      const deltaX = event.touches[0].clientX - event.touches[0].clientX;
-      const deltaY = event.touches[0].clientY - event.touches[0].clientY;
-
-      setOffset((prevOffset) => ({
-        x: prevOffset.x + deltaX,
-        y: prevOffset.y + deltaY,
-      }));
-    }
   };
 
   const startPanning = () => {
@@ -255,6 +263,7 @@ export default function PixelGrid() {
   return (
     <div
       onWheel={handleZoom}
+      onTouchStart={handleTouchStart}
       onTouchMove={(e) => {
         handleTouchMove(e);
         handleTouchZoom(e);
