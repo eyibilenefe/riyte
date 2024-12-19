@@ -33,7 +33,9 @@ function debounce<T extends (...args: unknown[]) => void>(
 }
 
 export default function PixelGrid() {
-  const [grid, setGrid] = useState<string[][]>(Array(GRID_SIZE).fill(Array(GRID_SIZE).fill('#FFFFFF')));
+  const [grid, setGrid] = useState<string[][]>(
+    Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill('#FFFFFF'))
+  );
   const [selectedColor, setSelectedColor] = useState('#000000');
   const [user, setUser] = useState<User | null>(null);
   const [selectedPixel, setSelectedPixel] = useState<{ x: number, y: number } | null>(null);
@@ -57,7 +59,7 @@ export default function PixelGrid() {
       if (error) {
         console.error('Error fetching grid:', error);
       } else if (data) {
-        const newGrid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill('#FFFFFF'));
+        const newGrid = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill('#FFFFFF'));
         data.forEach((pixel: Pixel) => {
           if (pixel.y < GRID_SIZE && pixel.x < GRID_SIZE) {
             newGrid[pixel.y][pixel.x] = pixel.color;
@@ -104,22 +106,8 @@ export default function PixelGrid() {
       setOffset({ x: initialOffsetX, y: initialOffsetY });
     }
 
-    // Adjust grid container size based on window size
-    const handleResize = () => {
-      if (gridContainerRef.current) {
-        const containerWidth = Math.min(window.innerWidth, GRID_SIZE * 15);
-        const containerHeight = Math.min(window.innerHeight, GRID_SIZE * 15);
-        gridContainerRef.current.style.width = `${containerWidth}px`;
-        gridContainerRef.current.style.height = `${containerHeight}px`;
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Initial call to set the size
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    // Remove the resize event listener and handler
+    return () => {};
   }, []);
 
   useEffect(() => {
@@ -254,7 +242,16 @@ export default function PixelGrid() {
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (event: React.TouchEvent) => {
+    if (event.touches.length === 1 && !isPanning.current) {
+      const touch = event.changedTouches[0];
+      const rect = gridRef.current?.getBoundingClientRect();
+      if (rect) {
+        const x = Math.floor((touch.clientX - rect.left) / 15);
+        const y = Math.floor((touch.clientY - rect.top) / 15);
+        handlePixelSelect(x, y);
+      }
+    }
     isPanning.current = false;
     lastTouchDistance.current = null;
   };
@@ -317,12 +314,13 @@ export default function PixelGrid() {
         style={{
           display: 'flex',
           justifyContent: 'center',
+          position: 'relative',
           alignItems: 'center',
           transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
           transformOrigin: 'center',
           overflow: 'hidden',
-          width: '100%', // Ensure the container takes full width
-          height: '100%', // Ensure the container takes full height
+          width: `${GRID_SIZE * 15}px`, // Set the container width
+          height: `${GRID_SIZE * 15}px`, // Set the container height
         }}
       >
         <div
@@ -352,6 +350,7 @@ export default function PixelGrid() {
                   boxShadow: selectedPixel?.x === x && selectedPixel?.y === y ? '0px 0px 10px rgba(0, 0, 0, 0.3)' : 'none',
                 }}
                 onClick={() => handlePixelSelect(x, y)}
+                onTouchEnd={() => handlePixelSelect(x, y)}
               />
             ))
           )}
