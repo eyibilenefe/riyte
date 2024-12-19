@@ -314,6 +314,8 @@ export default function PixelGrid() {
           transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
           transformOrigin: 'center',
           overflow: 'hidden',
+          width: '100%', // Ensure the container takes full width
+          height: '100%', // Ensure the container takes full height
         }}
       >
         <div
@@ -323,8 +325,8 @@ export default function PixelGrid() {
             display: 'grid',
             gridTemplateColumns: `repeat(${GRID_SIZE}, 15px)`,
             gridTemplateRows: `repeat(${GRID_SIZE}, 15px)`,
-            width: '100%',
-            height: '100%',
+            width: `${GRID_SIZE * 15}px`, // Set the grid width
+            height: `${GRID_SIZE * 15}px`, // Set the grid height
           }}
         >
           {grid.map((row, y) =>
